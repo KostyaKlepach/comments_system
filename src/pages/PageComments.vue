@@ -1,14 +1,31 @@
 <template>
   <q-page ref="pageChat" class="flex column">
-    <div class="q-pa-md column col justify-end">
-      <q-chat-message
-        bg-color="primary"
-        v-for="(message, key) in messages"
-        :key="key"
-        :name="message.from"
-        :text="[message.text]"
-      />
-      <!-- :sent="message.from == 'me' ? true : false" -->
+    <div class="q-pa-md justify-end">
+      <div class="column">
+        <div>
+          <div v-for="(message, key) in messages" :key="key" class="row no-wrap">
+            <q-chat-message
+              bg-color="primary"
+              :name="message.from"
+              :uid="message.userId"
+              :text="[message.text]"
+              avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+              :stamp="message.postTime"
+            />
+            <div class="column justify-center q-mt-sm" v-if="message.userId==userDetails.uid">
+              <q-btn
+                @click="deleteMessage(message, key)"
+                flat
+                round
+                color="secondary"
+                icon="delete"
+                size="xs"
+              />
+              <!-- <q-btn @click="tester" flat round color="secondary" icon="edit" size="xs" /> -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <q-footer elevated>
       <q-toolbar>
@@ -49,16 +66,19 @@ export default {
     ...mapActions('store', [
       'firebaseGetMessages',
       'firebaseStopGettingMessages',
-      'firebaseSendMessage'
+      'firebaseSendMessage',
+      'firebaseDeleteMessage'
     ]),
     sendMessage () {
       if (this.newMessage !== '') {
         this.firebaseSendMessage({
           message: {
             text: this.newMessage,
-            from: this.userDetails.name
+            from: this.userDetails.name,
+            userId: this.userDetails.uid,
+            postId: this.$route.params.postId,
+            postTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           },
-          postId: this.$route.params.postId
         })
       }
       this.clearMessage()
@@ -66,6 +86,13 @@ export default {
     clearMessage () {
       this.newMessage = ''
       this.$refs.newMessage.$el.focus()
+    },
+    deleteMessage (message, key) {
+      if (this.userDetails.uid == message.userId)
+        this.firebaseDeleteMessage({ postId: message.postId, id: key })
+    },
+    tester () {
+      console.log(this.userDetails.uid == message.userId)
     },
     scrollToBottom () {
       let pageChat = this.$refs.pageChat.$el
@@ -92,4 +119,5 @@ export default {
 }
 </script>
 
-<style></style>
+<style>
+</style>
